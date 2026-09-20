@@ -1,20 +1,47 @@
 const apprenants = require("./data");
 
+function nettoyerTexte(texte) {
+
+    texte = texte.trim();
+
+    let mots = texte.split(" ");
+    let motsNettoyes = [];
+
+    for (let i = 0; i < mots.length; i++) {
+        if (mots[i] !== "") {
+            motsNettoyes.push(mots[i]);
+        }
+    }
+
+    return motsNettoyes.join(" ");
+}
+
 function normaliserNom(nom) {
-    nom = nom.trim();
+
+    if (typeof nom !== "string") {
+        return "";
+    }
+
+    nom = nettoyerTexte(nom);
     nom = nom.toLowerCase();
+
     return nom;
 }
 
 function validerResultat(jour, exercicesTermines, totalExercices) {
 
-    if (isNaN(jour) || jour < 1 || jour > 7 || jour % 1 !== 0) {
+    if (typeof jour !== "number" || jour % 1 !== 0 || jour < 1 || jour > 7) {
         console.log("Erreur : jour invalide.");
         return false;
     }
 
-    if (isNaN(exercicesTermines) || isNaN(totalExercices)) {
+    if (typeof exercicesTermines !== "number" || typeof totalExercices !== "number") {
         console.log("Erreur : nombre d'exercices invalide.");
+        return false;
+    }
+
+    if (exercicesTermines % 1 !== 0 || totalExercices % 1 !== 0) {
+        console.log("Erreur : les nombres d'exercices doivent être entiers.");
         return false;
     }
 
@@ -33,17 +60,17 @@ function validerResultat(jour, exercicesTermines, totalExercices) {
 
 function ajouterApprenant(id, nomComplet, ville) {
 
-    if (isNaN(id) || id <= 0 || id % 1 !== 0) {
+    if (typeof id !== "number" || id % 1 !== 0 || id <= 0) {
         console.log("Erreur : identifiant invalide.");
         return false;
     }
 
-    if (nomComplet.trim() === "") {
+    if (typeof nomComplet !== "string" || nomComplet.trim() === "") {
         console.log("Erreur : nom invalide.");
         return false;
     }
 
-    if (ville.trim() === "") {
+    if (typeof ville !== "string" || ville.trim() === "") {
         console.log("Erreur : ville invalide.");
         return false;
     }
@@ -58,8 +85,8 @@ function ajouterApprenant(id, nomComplet, ville) {
 
     const nouvelApprenant = {
         id: id,
-        nomComplet: nomComplet.trim(),
-        ville: ville.trim(),
+        nomComplet: nettoyerTexte(nomComplet),
+        ville: nettoyerTexte(ville),
         resultats: []
     };
 
@@ -89,7 +116,12 @@ function enregistrerResultat(id, jour, exercicesTermines, totalExercices, challe
         return false;
     }
 
-    if (!validerResultat(jour, exercicesTermines, totalExercices)) {
+    if (validerResultat(jour, exercicesTermines, totalExercices) === false) {
+        return false;
+    }
+
+    if (typeof challengeTermine !== "boolean") {
+        console.log("Erreur : le challenge doit être true ou false.");
         return false;
     }
 
@@ -196,36 +228,52 @@ function filtrerParNiveau(niveauRecherche) {
 
 function trierParProgression() {
 
-    apprenants.sort(function(a, b) {
+    let apprenantsTries = [];
 
-        const progressionA = calculerProgression(a).progression;
-        const progressionB = calculerProgression(b).progression;
+    for (let i = 0; i < apprenants.length; i++) {
+        apprenantsTries.push(apprenants[i]);
+    }
 
-        return progressionB - progressionA;
-    });
+    for (let i = 0; i < apprenantsTries.length - 1; i++) {
+        for (let j = 0; j < apprenantsTries.length - 1 - i; j++) {
 
-    return apprenants;
+            const progressionA = calculerProgression(apprenantsTries[j]).progression;
+            const progressionB = calculerProgression(apprenantsTries[j + 1]).progression;
+
+            if (progressionA < progressionB) {
+                let temporaire = apprenantsTries[j];
+                apprenantsTries[j] = apprenantsTries[j + 1];
+                apprenantsTries[j + 1] = temporaire;
+            }
+        }
+    }
+
+    return apprenantsTries;
 }
 
 function trierParNom() {
 
-    apprenants.sort(function(a, b) {
+    let apprenantsTries = [];
 
-        const nomA = normaliserNom(a.nomComplet);
-        const nomB = normaliserNom(b.nomComplet);
+    for (let i = 0; i < apprenants.length; i++) {
+        apprenantsTries.push(apprenants[i]);
+    }
 
-        if (nomA < nomB) {
-            return -1;
+    for (let i = 0; i < apprenantsTries.length - 1; i++) {
+        for (let j = 0; j < apprenantsTries.length - 1 - i; j++) {
+
+            const nomA = normaliserNom(apprenantsTries[j].nomComplet);
+            const nomB = normaliserNom(apprenantsTries[j + 1].nomComplet);
+
+            if (nomA > nomB) {
+                let temporaire = apprenantsTries[j];
+                apprenantsTries[j] = apprenantsTries[j + 1];
+                apprenantsTries[j + 1] = temporaire;
+            }
         }
+    }
 
-        if (nomA > nomB) {
-            return 1;
-        }
-
-        return 0;
-    });
-
-    return apprenants;
+    return apprenantsTries;
 }
 
 function afficherTableauDeBord() {
@@ -286,6 +334,7 @@ function afficherTableauDeBord() {
 
                 if (apprenantsTries[i].resultats[j].jour === jour) {
                     jourExiste = true;
+                    break;
                 }
             }
 

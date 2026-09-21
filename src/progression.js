@@ -1,52 +1,28 @@
 const apprenants = require("./data");
 
-function nettoyerTexte(texte) {
-
-    texte = texte.trim();
-
-    let mots = texte.split(" ");
-    let motsNettoyes = [];
-
-    for (let i = 0; i < mots.length; i++) {
-        if (mots[i] !== "") {
-            motsNettoyes.push(mots[i]);
-        }
-    }
-
-    return motsNettoyes.join(" ");
-}
-
 function normaliserNom(nom) {
-
-    if (typeof nom !== "string") {
-        return "";
-    }
-
-    nom = nettoyerTexte(nom);
+    nom = nom.trim();
     nom = nom.toLowerCase();
-
     return nom;
 }
-
 function validerResultat(jour, exercicesTermines, totalExercices) {
-
-    if (typeof jour !== "number" || jour % 1 !== 0 || jour < 1 || jour > 7) {
+    if (isNaN(jour) || jour < 1 || jour > 7 || jour % 1 !== 0) {
         console.log("Erreur : jour invalide.");
         return false;
     }
 
-    if (typeof exercicesTermines !== "number" || typeof totalExercices !== "number") {
+    if (isNaN(exercicesTermines) || isNaN(totalExercices)) {
         console.log("Erreur : nombre d'exercices invalide.");
         return false;
     }
 
-    if (exercicesTermines % 1 !== 0 || totalExercices % 1 !== 0) {
-        console.log("Erreur : les nombres d'exercices doivent être entiers.");
+    if (exercicesTermines < 0 || totalExercices < 0) {
+        console.log("Erreur : nombre négatif.");
         return false;
     }
 
-    if (exercicesTermines < 0 || totalExercices < 0) {
-        console.log("Erreur : les exercices ne peuvent pas être négatifs.");
+    if (exercicesTermines % 1 !== 0 || totalExercices % 1 !== 0) {
+        console.log("Erreur : utilisez des nombres entiers.");
         return false;
     }
 
@@ -57,48 +33,8 @@ function validerResultat(jour, exercicesTermines, totalExercices) {
 
     return true;
 }
-
-function ajouterApprenant(id, nomComplet, ville) {
-
-    if (typeof id !== "number" || id % 1 !== 0 || id <= 0) {
-        console.log("Erreur : identifiant invalide.");
-        return false;
-    }
-
-    if (typeof nomComplet !== "string" || nomComplet.trim() === "") {
-        console.log("Erreur : nom invalide.");
-        return false;
-    }
-
-    if (typeof ville !== "string" || ville.trim() === "") {
-        console.log("Erreur : ville invalide.");
-        return false;
-    }
-
-    for (let i = 0; i < apprenants.length; i++) {
-
-        if (apprenants[i].id === id) {
-            console.log("Erreur : cet identifiant existe déjà.");
-            return false;
-        }
-    }
-
-    const nouvelApprenant = {
-        id: id,
-        nomComplet: nettoyerTexte(nomComplet),
-        ville: nettoyerTexte(ville),
-        resultats: []
-    };
-
-    apprenants.push(nouvelApprenant);
-
-    return true;
-}
-
 function rechercherApprenant(id) {
-
     for (let i = 0; i < apprenants.length; i++) {
-
         if (apprenants[i].id === id) {
             return apprenants[i];
         }
@@ -106,9 +42,34 @@ function rechercherApprenant(id) {
 
     return null;
 }
+function ajouterApprenant(id, nomComplet, ville) {
+    if (isNaN(id) || id <= 0 || id % 1 !== 0) {
+        console.log("Erreur : identifiant invalide.");
+        return false;
+    }
 
+    if (nomComplet.trim() === "" || ville.trim() === "") {
+        console.log("Erreur : le nom et la ville sont obligatoires.");
+        return false;
+    }
+
+    if (rechercherApprenant(id) !== null) {
+        console.log("Erreur : cet identifiant existe déjà.");
+        return false;
+    }
+
+    const nouvelApprenant = {
+        id: id,
+        nomComplet: nomComplet.trim(),
+        ville: ville.trim(),
+        resultats: []
+    };
+
+    apprenants.push(nouvelApprenant);
+
+    return true;
+}
 function enregistrerResultat(id, jour, exercicesTermines, totalExercices, challengeTermine) {
-
     const apprenant = rechercherApprenant(id);
 
     if (apprenant === null) {
@@ -120,11 +81,6 @@ function enregistrerResultat(id, jour, exercicesTermines, totalExercices, challe
         return false;
     }
 
-    if (typeof challengeTermine !== "boolean") {
-        console.log("Erreur : le challenge doit être true ou false.");
-        return false;
-    }
-
     const nouveauResultat = {
         jour: jour,
         exercicesTermines: exercicesTermines,
@@ -133,7 +89,6 @@ function enregistrerResultat(id, jour, exercicesTermines, totalExercices, challe
     };
 
     for (let i = 0; i < apprenant.resultats.length; i++) {
-
         if (apprenant.resultats[i].jour === jour) {
             apprenant.resultats[i] = nouveauResultat;
             return true;
@@ -144,15 +99,12 @@ function enregistrerResultat(id, jour, exercicesTermines, totalExercices, challe
 
     return true;
 }
-
 function calculerProgression(apprenant) {
-
     let totalTermines = 0;
     let totalProposes = 0;
     let challengesTermines = 0;
 
     for (let i = 0; i < apprenant.resultats.length; i++) {
-
         totalTermines += apprenant.resultats[i].exercicesTermines;
         totalProposes += apprenant.resultats[i].totalExercices;
 
@@ -160,8 +112,6 @@ function calculerProgression(apprenant) {
             challengesTermines++;
         }
     }
-
-    let journeesRenseignees = apprenant.resultats.length;
 
     let progression = 0;
 
@@ -184,22 +134,15 @@ function calculerProgression(apprenant) {
         totalProposes: totalProposes,
         progression: progression,
         challengesTermines: challengesTermines,
-        journeesRenseignees: journeesRenseignees,
+        journeesRenseignees: apprenant.resultats.length,
         niveau: niveau
     };
 }
-
 function rechercherParNom(nom) {
-
     const nomRecherche = normaliserNom(nom);
     const resultatsRecherche = [];
 
-    if (nomRecherche === "") {
-        return resultatsRecherche;
-    }
-
     for (let i = 0; i < apprenants.length; i++) {
-
         const nomApprenant = normaliserNom(apprenants[i].nomComplet);
 
         if (nomApprenant.includes(nomRecherche)) {
@@ -209,13 +152,10 @@ function rechercherParNom(nom) {
 
     return resultatsRecherche;
 }
-
 function filtrerParNiveau(niveauRecherche) {
-
     const apprenantsFiltres = [];
 
     for (let i = 0; i < apprenants.length; i++) {
-
         const progressionApprenant = calculerProgression(apprenants[i]);
 
         if (progressionApprenant.niveau === niveauRecherche) {
@@ -225,156 +165,142 @@ function filtrerParNiveau(niveauRecherche) {
 
     return apprenantsFiltres;
 }
-
 function trierParProgression() {
-
-    let apprenantsTries = [];
-
-    for (let i = 0; i < apprenants.length; i++) {
-        apprenantsTries.push(apprenants[i]);
-    }
-
-    for (let i = 0; i < apprenantsTries.length - 1; i++) {
-        for (let j = 0; j < apprenantsTries.length - 1 - i; j++) {
-
-            const progressionA = calculerProgression(apprenantsTries[j]).progression;
-            const progressionB = calculerProgression(apprenantsTries[j + 1]).progression;
+    for (let i = 0; i < apprenants.length - 1; i++) {
+        for (let j = 0; j < apprenants.length - 1 - i; j++) {
+            const progressionA = calculerProgression(apprenants[j]).progression;
+            const progressionB = calculerProgression(apprenants[j + 1]).progression;
 
             if (progressionA < progressionB) {
-                let temporaire = apprenantsTries[j];
-                apprenantsTries[j] = apprenantsTries[j + 1];
-                apprenantsTries[j + 1] = temporaire;
+                const temporaire = apprenants[j];
+                apprenants[j] = apprenants[j + 1];
+                apprenants[j + 1] = temporaire;
             }
         }
     }
 
-    return apprenantsTries;
+    return apprenants;
 }
-
 function trierParNom() {
-
-    let apprenantsTries = [];
-
-    for (let i = 0; i < apprenants.length; i++) {
-        apprenantsTries.push(apprenants[i]);
-    }
-
-    for (let i = 0; i < apprenantsTries.length - 1; i++) {
-        for (let j = 0; j < apprenantsTries.length - 1 - i; j++) {
-
-            const nomA = normaliserNom(apprenantsTries[j].nomComplet);
-            const nomB = normaliserNom(apprenantsTries[j + 1].nomComplet);
+    for (let i = 0; i < apprenants.length - 1; i++) {
+        for (let j = 0; j < apprenants.length - 1 - i; j++) {
+            const nomA = normaliserNom(apprenants[j].nomComplet);
+            const nomB = normaliserNom(apprenants[j + 1].nomComplet);
 
             if (nomA > nomB) {
-                let temporaire = apprenantsTries[j];
-                apprenantsTries[j] = apprenantsTries[j + 1];
-                apprenantsTries[j + 1] = temporaire;
+                const temporaire = apprenants[j];
+                apprenants[j] = apprenants[j + 1];
+                apprenants[j + 1] = temporaire;
             }
         }
     }
 
-    return apprenantsTries;
+    return apprenants;
 }
+function trouverJoursManquants(apprenant) {
+    const joursManquants = [];
 
+    for (let jour = 1; jour <= 7; jour++) {
+        let jourExiste = false;
+
+        for (let i = 0; i < apprenant.resultats.length; i++) {
+            if (apprenant.resultats[i].jour === jour) {
+                jourExiste = true;
+            }
+        }
+
+        if (jourExiste === false) {
+            joursManquants.push(jour);
+        }
+    }
+
+    return joursManquants;
+}
+function trouverChallengesNonTermines(apprenant) {
+    const jours = [];
+
+    for (let i = 0; i < apprenant.resultats.length; i++) {
+        if (apprenant.resultats[i].challengeTermine === false) {
+            jours.push(apprenant.resultats[i].jour);
+        }
+    }
+
+    return jours;
+}
 function afficherTableauDeBord() {
-
-    const totalApprenants = apprenants.length;
-
     let sommeProgressions = 0;
     let nombreSolide = 0;
     let nombreEnProgression = 0;
     let nombreARenforcer = 0;
 
     for (let i = 0; i < apprenants.length; i++) {
+        const progression = calculerProgression(apprenants[i]);
 
-        const progressionApprenant = calculerProgression(apprenants[i]);
+        sommeProgressions += progression.progression;
 
-        sommeProgressions += progressionApprenant.progression;
-
-        if (progressionApprenant.niveau === "Solide") {
+        if (progression.niveau === "Solide") {
             nombreSolide++;
-        } else if (progressionApprenant.niveau === "En progression") {
+        } else if (progression.niveau === "En progression") {
             nombreEnProgression++;
         } else {
             nombreARenforcer++;
         }
     }
 
-    let moyenneProgression = 0;
+    let moyenne = 0;
 
-    if (totalApprenants > 0) {
-        moyenneProgression = sommeProgressions / totalApprenants;
+    if (apprenants.length > 0) {
+        moyenne = sommeProgressions / apprenants.length;
     }
 
     console.log("");
-    console.log("----------------------------------------------");
-    console.log("               TABLEAU DE BORD");
-    console.log("----------------------------------------------");
-    console.log("Total apprenants :", totalApprenants);
-    console.log("Moyenne du groupe :", moyenneProgression + "%");
+    console.log("--------------- TABLEAU DE BORD ---------------");
+    console.log("Total apprenants :", apprenants.length);
+    console.log("Moyenne du groupe :", moyenne + "%");
     console.log("Solide :", nombreSolide);
     console.log("En progression :", nombreEnProgression);
     console.log("À renforcer :", nombreARenforcer);
-    console.log("");
 
-    const apprenantsTries = trierParProgression();
+    const liste = trierParProgression();
 
-    for (let i = 0; i < apprenantsTries.length; i++) {
+    for (let i = 0; i < liste.length; i++) {
+        const progression = calculerProgression(liste[i]);
 
-        const progressionApprenant = calculerProgression(apprenantsTries[i]);
-
-        const joursManquants = [];
-        const challengesNonTermines = [];
-
-        for (let jour = 1; jour <= 7; jour++) {
-
-            let jourExiste = false;
-
-            for (let j = 0; j < apprenantsTries[i].resultats.length; j++) {
-
-                if (apprenantsTries[i].resultats[j].jour === jour) {
-                    jourExiste = true;
-                    break;
-                }
-            }
-
-            if (jourExiste === false) {
-                joursManquants.push(jour);
-            }
-        }
-
-        for (let j = 0; j < apprenantsTries[i].resultats.length; j++) {
-
-            if (apprenantsTries[i].resultats[j].challengeTermine === false) {
-                challengesNonTermines.push(
-                    apprenantsTries[i].resultats[j].jour
-                );
-            }
-        }
-
-        console.log("----------------------------------------------");
-        console.log("Nom :", apprenantsTries[i].nomComplet);
-        console.log("Progression :", progressionApprenant.progression + "%");
-        console.log("Niveau :", progressionApprenant.niveau);
-        console.log("Jours renseignés :", progressionApprenant.journeesRenseignees + "/7");
-        console.log("Jours non renseignés :", joursManquants);
-        console.log("Challenges terminés :", progressionApprenant.challengesTermines);
-        console.log("Challenges non terminés :", challengesNonTermines);
+        console.log("-----------------------------------------------");
+        console.log("Nom :", liste[i].nomComplet);
+        console.log("Progression :", progression.progression + "%");
+        console.log("Niveau :", progression.niveau);
+        console.log(
+            "Jours renseignés :",
+            progression.journeesRenseignees + "/7"
+        );
+        console.log(
+            "Jours non renseignés :",
+            trouverJoursManquants(liste[i])
+        );
+        console.log(
+            "Challenges terminés :",
+            progression.challengesTermines
+        );
+        console.log(
+            "Challenges non terminés :",
+            trouverChallengesNonTermines(liste[i])
+        );
     }
 
-    console.log("----------------------------------------------");
+    console.log("-----------------------------------------------");
 }
 
 module.exports = {
-    normaliserNom,
-    validerResultat,
-    ajouterApprenant,
-    rechercherApprenant,
-    enregistrerResultat,
-    calculerProgression,
-    rechercherParNom,
-    filtrerParNiveau,
-    trierParProgression,
-    trierParNom,
-    afficherTableauDeBord
+    normaliserNom: normaliserNom,
+    validerResultat: validerResultat,
+    ajouterApprenant: ajouterApprenant,
+    rechercherApprenant: rechercherApprenant,
+    enregistrerResultat: enregistrerResultat,
+    calculerProgression: calculerProgression,
+    rechercherParNom: rechercherParNom,
+    filtrerParNiveau: filtrerParNiveau,
+    trierParProgression: trierParProgression,
+    trierParNom: trierParNom,
+    afficherTableauDeBord: afficherTableauDeBord
 };
